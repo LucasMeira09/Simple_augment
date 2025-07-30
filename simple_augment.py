@@ -218,6 +218,3 @@ class DataAugmentation:
         
         # retorna uma lista de tensores para uso de treinamento de maquina
         return tensor_list
-    
-data = DataAugmentation("Data_augmentation\data_img", 255)
-data.Image_rotation(random=False)

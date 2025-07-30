@@ -6,25 +6,27 @@ class DataAugmentation:
     
     def __init__(self, directory_path, size_img=255, directory_name="Data_A"):
 
-        # lista todos os arquivos da pasta
+        # lists all files in the folder
         self.img_directory_list = os.listdir(directory_path)
         
-        # camino da pasta
+        # folder path
         self.directory_path = directory_path 
         
-        # armazena o tamanho da imagem desejado
+        # stores the desired image size
         self.size_img = size_img
         
-        # nome da pasta criada ao fazer uso dos objetos
+        # name of the folder created when using the object
         self.directory_name = directory_name
 
-        # verificacao para mandar as mensagens de erros uma so vez
+        # verification to print error messages only once
         self.already_printed = True
 
     def save_image(self, output_name, img):
-        # nome da pasta que vai ser criada
+    # saves images
+        # name of the folder to be created
         directory_name = self.directory_name
-
+        
+        # saves in a new folder, prints message in case of error
         try:
             os.mkdir(directory_name)
             if self.already_printed:
@@ -43,107 +45,110 @@ class DataAugmentation:
                 print(f'An error occured: {e}')
                 self.already_printed = False
 
-        #redimensiona a image
+        # resizes the image
         img = img.resize((self.size_img, self.size_img))
-        # Define o caminho completo para salvar a nova imagem
+        # defines the full path to save the new image
         output_path = os.path.join(directory_name, output_name)
-        # Salva a nova imagem rotacionada
+        # saves the new rotated image
         img.save(output_path)
 
     def resize_image(self):
-        #precore todos os arquivos da pasta
+    # resizes images
+        # iterates over all files in the folder
         for directory in self.img_directory_list:
-            #caminho das imagens
+            # image path
             img_directory = os.path.join(self.directory_path, directory)
-            # abre a imagem
+            # opens the image
             img = Image.open(img_directory)
-            # redimensiona a imagem
+            # resizes the image
             img = img.resize((self.size_img, self.size_img))
-            # chama a funcao para salvar
+            # calls the save function
             self.save_image(directory, img)
         
         
     def Image_rotation(self, random=False, quantity=0, min=10, max=340):
-        
-        # Itera sobre cada item da lista de arquivos
+    # applies different rotation levels to images, randomly or as defined by user
+        # iterates over each item in the file list
         for directory in self.img_directory_list:
 
-            # Monta o caminho completo da imagem
+            # builds the full image path
             img_directory = os.path.join(self.directory_path, directory)
             try:
-                # Abre a imagem para processamento
+                # opens the image for processing
                 img = Image.open(img_directory)
 
-                # define os angolos de rotacao caso aleatorio
+                # defines rotation angles if random
                 if random:
-                    # padrao de numero aleatorio 
+                    # random number generator
                     rng = np.random.default_rng()
                     angl_rotate = rng.integers(low= min, high=max, size=quantity)
                 else: 
-                    # Define a lista de ângulos de rotação para aplicar às imagens
+                    # defines list of fixed angles to rotate images
                     angl_rotate = [45, 90, 135, 180, 225, 270, 315]
             
-                # Para cada ângulo na lista, aplica rotação e salva imagem modificada
+                # for each angle in the list, applies rotation and saves the modified image
                 for num,angl in enumerate(angl_rotate):
 
-                    # Rotaciona a imagem no ângulo especificado
+                    # rotates the image by the specified angle
                     img_rotate = img.rotate(angl, expand=True)
 
-                    # Define o nome de saída da nova imagem
+                    # defines the output name for the new image
                     base_name , ext = os.path.splitext(directory)
                     output_name = f"{base_name}_{angl_rotate[num]}{ext}"
 
                     self.save_image(output_name, img_rotate)
 
-            # Captura e imprime qualquer erro ocorrido durante o processo
+            # captures and prints any errors during the process
             except Exception as e:
                 print(f"Error in process {img_directory}: {e}")
                 
     def Image_noise(self, sigma):
+    # adds noise to the image
 
-        # percore a lista de arquivos
+        # iterates through the file list
         for directory in self.img_directory_list:
-            # cria o caminho para abrir a imagem
+            # creates the path to open the image
             img_directory = os.path.join(self.directory_path, directory)
 
-            # abre os arquivos
+            # opens the files
             img = Image.open(img_directory)
-            # transforma em array numpy
+            # converts to numpy array
             img_array = np.array(img)
             
-            # ajusta o nivel do roido
+            # adjusts the noise level
             noise = np.random.normal(0, sigma, img_array.shape).astype(np.int16)
-            # adiciona o roido pixel por pixel com limite para nao passar de 255
+            # adds noise pixel by pixel, limited to not exceed 255
             noisy_array = np.clip(img_array + noise, 0, 255).astype(np.uint8)
             
-            # reconstroi a imagem
+            # reconstructs the image
             noisy_image = Image.fromarray(noisy_array)
 
-            # Define o nome de saída da nova imagem
+            # defines the output name for the new image
             base_name , _ = os.path.splitext(directory)
             output_name = f"{base_name}_noisy.jpg"
-            
+            # saves the image
             self.save_image(output_name, noisy_image)
 
     def Image_crop(self, left=0, upper=0, right=0, lower=0, random=False):
+    # crops the images randomly if desired or using specific values
 
-        # se a condicao for verdadeira gera os cortes aleatoriamente
+        # if condition is true, performs random cropping
         if random == True:
-            # percore a lista de arquivos
+            # iterates through the file list
             for directory in self.img_directory_list:
-                # cria o caminho para abrir a imagem
+                # creates the path to open the image
                 img_directory = os.path.join(self.directory_path, directory)
-                # abre a imagem
+                # opens the image
                 img = Image.open(img_directory)
 
-                # tamanho da imagem
+                # image dimensions
                 width, height = img.size
 
-                # define por padra a aleatoridade
+                # defines random pattern
                 rng = np.random.default_rng()
                 random = rng.integers(low=1, high=self.size_img, size=4)
 
-                # atribui os numeros aleatorios
+                # assigns random values
                 crop_w = rng.integers(low=30, high=width)
                 crop_h = rng.integers(low=30, high=height)
                 
@@ -152,69 +157,72 @@ class DataAugmentation:
                 right = left + crop_w
                 lower = upper + crop_h
 
-                # recorta a imagem
+                # crops the image
                 img = img.crop((left, upper, right, lower))
-                #salva
+                # saves
                 base_name , _ = os.path.splitext(directory)
                 output_name = f"{base_name}_crop.jpg"
                 self.save_image(output_name, img)
 
         elif right > left and lower > upper:
-            #percore a lista de arquivo
+            # iterates through the file list
             for directory in self.img_directory_list:
-                # cria o caminho para abrir a imagem
+                # creates the path to open the image
                 img_directory = os.path.join(self.directory_path, directory)
-                # abre a imagem
+                # opens the image
                 img = Image.open(img_directory)
-                # recorta a imagem
+                # crops the image
                 img = img.crop((left, upper, right, lower))
-                # novo nome do arquivo
+                # new file name
                 base_name , _ = os.path.splitext(directory)
                 output_name = f"{base_name}_crop.jpg"
-                #salva 
+                # saves 
                 self.save_image(output_name, img)
         else:
-            print(f"Cordenadas fora do limite")
+            print(f"Coordinates out of bounds")
                 
 
     def Image_tensorHWC(self):
+    # converts images into tensors in HWC format (height, width, channels)
+        # tensor list
         tensor_list = []
         
-        # percorre a lista de arquivos
+        # iterates through the file list
         for directory in self.img_directory_list:
             img_directory = os.path.join(self.directory_path,directory)
-            # abre os arquivos
+            # opens the files
             img = Image.open(img_directory).convert("RGB")
 
-            # padroniza as imagem
+            # standardizes the image
             img = img.resize((self.size_img, self.size_img))
-            # transforma o arquivo en tensor (H, W, C) (255, 255, 3) e mantem os valores entre 0 e 1
+            # converts file into tensor (H, W, C) and keeps values between 0 and 1
             img_tensor = np.array(img).astype(np.float32) / 255.0
-            # adiciona os tensor em uma lista
+            # appends tensor to list
             tensor_list.append(img_tensor)
         
-        # retorna uma lista de tensores para uso de treinamento de maquina
+        # returns a list of tensors for machine training use
         return tensor_list
     
     def Image_tensorCHW(self):    
-        # lista de tensor
+    # converts images into tensors in CHW format (channels, height, width)
+        # tensor list
         tensor_list = []
         
-        # percorre a lista de arquivos
+        # iterates through the file list
         for directory in self.img_directory_list:
             img_directory = os.path.join(self.directory_path, directory)
-            # abre os arquivos
+            # opens the files
             img = Image.open(img_directory).convert("RGB")
 
-            # padronisa as imagem em um mesmo tamanho
+            # standardizes image to same size
             img = img.resize((self.size_img, self.size_img))
 
-            # transforma o arquivo en tensor (C, H, W) (3, 255, 255) e mantem os valores entre 0 e 1
+            # converts file into tensor (C, H, W) and keeps values between 0 and 1
             img_tensor = np.array(img).astype(np.float32) / 255.0
             #
             img_tensor3D = np.transpose(img_tensor, (2, 0, 1))
-            # adiciona os tensor em uma lista
+            # appends tensor to list
             tensor_list.append(img_tensor3D)
         
-        # retorna uma lista de tensores para uso de treinamento de maquina
+        # returns a list of tensors for machine training use
         return tensor_list
